@@ -1,0 +1,139 @@
+{
+  "source": "output.html",
+  "extracted_at": "2026-06-24T11:57:44",
+  "format": "webpack_exports",
+  "export_var": "t",
+  "output_dir": "C:\\Users\\QAQ\\Desktop\\h5解码工具\\res\\2026-06-24_115722_output",
+  "files": [
+    {
+      "path": "12_1.jpg",
+      "kind": "binary",
+      "bytes": 64302
+    },
+    {
+      "path": "13_1.jpg",
+      "kind": "binary",
+      "bytes": 65901
+    },
+    {
+      "path": "14_1.jpg",
+      "kind": "binary",
+      "bytes": 38108
+    },
+    {
+      "path": "15_1.jpg",
+      "kind": "binary",
+      "bytes": 39455
+    },
+    {
+      "path": "16_1.jpg",
+      "kind": "binary",
+      "bytes": 36001
+    },
+    {
+      "path": "20260507-175327.png",
+      "kind": "binary",
+      "bytes": 164753
+    },
+    {
+      "path": "20260509-102519.png",
+      "kind": "binary",
+      "bytes": 67003
+    },
+    {
+      "path": "5_8_.MP3",
+      "kind": "binary",
+      "bytes": 31542
+    },
+    {
+      "path": "5_9__1_.MP3",
+      "kind": "binary",
+      "bytes": 34468
+    },
+    {
+      "path": "Applause_Cheering.mp3",
+      "kind": "binary",
+      "bytes": 60857
+    },
+    {
+      "path": "Bubble-01.mp3",
+      "kind": "binary",
+      "bytes": 4014
+    },
+    {
+      "path": "ChatGPT_Image_2026_5_9__10_42_16__1___1_.png",
+      "kind": "binary",
+      "bytes": 129607
+    },
+    {
+      "path": "ChatGPT_Image_2026_5_9__11_26_13__1_.png",
+      "kind": "binary",
+      "bytes": 55241
+    },
+    {
+      "path": "CrowdReaction.mp3",
+      "kind": "binary",
+      "bytes": 24518
+    },
+    {
+      "path": "Elevator-1_1_2.mp3",
+      "kind": "binary",
+      "bytes": 146190
+    },
+    {
+      "path": "_4_small.mp4",
+      "kind": "binary",
+      "bytes": 542013
+    },
+    {
+      "path": "_6_500k.mp4",
+      "kind": "binary",
+      "bytes": 437622
+    },
+    {
+      "path": "__-___7.png",
+      "kind": "binary",
+      "bytes": 168125
+    },
+    {
+      "path": "__.png",
+      "kind": "binary",
+      "bytes": 54348
+    },
+    {
+      "path": "___1.png",
+      "kind": "binary",
+      "bytes": 46441
+    },
+    {
+      "path": "___9.png",
+      "kind": "binary",
+      "bytes": 39721
+    },
+    {
+      "path": "def-template.json",
+      "kind": "binary",
+      "bytes": 30839
+    },
+    {
+      "path": "hand-00016.png",
+      "kind": "binary",
+      "bytes": 2726
+    },
+    {
+      "path": "logo.png",
+      "kind": "binary",
+      "bytes": 23948
+    },
+    {
+      "path": "prom__1_.png",
+      "kind": "binary",
+      "bytes": 371534
+    },
+    {
+      "path": "prom__2_.png",
+      "kind": "binary",
+      "bytes": 201608
+    }
+  ]
+}

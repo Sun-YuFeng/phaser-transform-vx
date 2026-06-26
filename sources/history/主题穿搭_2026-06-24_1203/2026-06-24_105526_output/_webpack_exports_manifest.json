@@ -1,0 +1,134 @@
+{
+  "source": "output.html",
+  "extracted_at": "2026-06-24T10:55:43",
+  "format": "webpack_exports",
+  "export_var": "Jt",
+  "output_dir": "C:\\Users\\QAQ\\Desktop\\h5解码工具\\res\\2026-06-24_105526_output",
+  "files": [
+    {
+      "path": "12_1.jpg",
+      "kind": "binary",
+      "bytes": 64631
+    },
+    {
+      "path": "13_1.jpg",
+      "kind": "binary",
+      "bytes": 48751
+    },
+    {
+      "path": "14_1.jpg",
+      "kind": "binary",
+      "bytes": 28158
+    },
+    {
+      "path": "15_1.jpg",
+      "kind": "binary",
+      "bytes": 28972
+    },
+    {
+      "path": "16_1.jpg",
+      "kind": "binary",
+      "bytes": 28798
+    },
+    {
+      "path": "20260507-175327.png",
+      "kind": "binary",
+      "bytes": 136434
+    },
+    {
+      "path": "20260507-181246.png",
+      "kind": "binary",
+      "bytes": 152856
+    },
+    {
+      "path": "5_7___1__1.MP3",
+      "kind": "binary",
+      "bytes": 33841
+    },
+    {
+      "path": "5_7___1__1_.MP3",
+      "kind": "binary",
+      "bytes": 10644
+    },
+    {
+      "path": "5_8_.MP3",
+      "kind": "binary",
+      "bytes": 23601
+    },
+    {
+      "path": "Bubble-01.mp3",
+      "kind": "binary",
+      "bytes": 4014
+    },
+    {
+      "path": "ChatGPT_Image_2026_5_7__18_31_36__1_.png",
+      "kind": "binary",
+      "bytes": 143777
+    },
+    {
+      "path": "Elevator-1_1_2.mp3",
+      "kind": "binary",
+      "bytes": 99766
+    },
+    {
+      "path": "_3_big.mp4",
+      "kind": "binary",
+      "bytes": 503269
+    },
+    {
+      "path": "__.png",
+      "kind": "binary",
+      "bytes": 54348
+    },
+    {
+      "path": "___1.png",
+      "kind": "binary",
+      "bytes": 44401
+    },
+    {
+      "path": "___3.png",
+      "kind": "binary",
+      "bytes": 83252
+    },
+    {
+      "path": "___9.png",
+      "kind": "binary",
+      "bytes": 34306
+    },
+    {
+      "path": "__big.mp4",
+      "kind": "binary",
+      "bytes": 496357
+    },
+    {
+      "path": "college___1.png",
+      "kind": "binary",
+      "bytes": 53218
+    },
+    {
+      "path": "def-template.json",
+      "kind": "binary",
+      "bytes": 30761
+    },
+    {
+      "path": "hand-00016.png",
+      "kind": "binary",
+      "bytes": 2726
+    },
+    {
+      "path": "logo.png",
+      "kind": "binary",
+      "bytes": 40255
+    },
+    {
+      "path": "school__1___1_.png",
+      "kind": "binary",
+      "bytes": 113456
+    },
+    {
+      "path": "school__2___1___2_.png",
+      "kind": "binary",
+      "bytes": 126457
+    }
+  ]
+}

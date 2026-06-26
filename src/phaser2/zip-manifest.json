@@ -1,0 +1,34 @@
+{
+  "paths": [
+    "replace_js/Assets/meta/assetCountMap.js",
+    "replace_js/Assets/meta/globalUrlMap.js",
+    "replace_js/data.js",
+    "replace_js/js/game-scripts.min.js",
+    "replace_js/js/resource-loader.js",
+    "replace_js/js/resource_loader.js",
+    "replace_js/lib/PlaySmartEditorData.js",
+    "replace_js/lib/phaser.min.js",
+    "replace_js/lib/qc-core-min.js",
+    "replace_js/lib/qc-loading-debug.js",
+    "replace_js/lib/qc-webgl.js",
+    "replace_js/lib/webfontloader.js",
+    "replace_js/libs/expand/languagesMgr/languagesMgr.js",
+    "replace_js/picDesc.js"
+  ],
+  "scriptList": [
+    "replace_js/Assets/meta/globalUrlMap.js",
+    "replace_js/lib/phaser.min.js",
+    "replace_js/lib/webfontloader.js",
+    "replace_js/lib/qc-core-min.js",
+    "replace_js/lib/qc-webgl.js",
+    "replace_js/lib/PlaySmartEditorData.js",
+    "replace_js/picDesc.js",
+    "replace_js/data.js",
+    "replace_js/js/resource-loader.js",
+    "replace_js/js/resource_loader.js",
+    "replace_js/Assets/meta/assetCountMap.js",
+    "replace_js/js/game-scripts.min.js",
+    "replace_js/lib/qc-loading-debug.js",
+    "replace_js/libs/expand/languagesMgr/languagesMgr.js"
+  ]
+}

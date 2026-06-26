@@ -1,0 +1,18 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# 构建产物
+phaser*/js/playable/bundle.js
+
+# 日志
+logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

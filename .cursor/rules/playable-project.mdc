@@ -1,0 +1,50 @@
+---
+description: PlayableMaker 双端项目结构（H5 Vite + 微信 phaser 模板 + 独立工程目录）
+alwaysApply: true
+---
+
+# PlayableMaker 双端项目
+
+## sources 目录（游戏素材）
+
+```
+sources/
+├── current/     ← 正在做的：output.html + def-template.json + 资源（平铺或 assets/）
+└── history/     ← 已完成归档，不参与构建
+```
+
+- **只做当前游戏时**：文件只放 `sources/current/`
+- **不要**再往 `sources/` 根目录丢 export-xxx 文件夹
+
+## 其他路径
+
+| 路径 | 用途 |
+|------|------|
+| `public/assets/` | extract 生成的构建用副本 |
+| `public/def-template.json` | 当前游戏配置（extract 同步） |
+| `phaser3.90.0/` | 微信版本模板（骨架） |
+| `phaser3.90.0_{时间}/` | 独立微信工程（开发者工具打开） |
+| `.wx-project` | 当前 build:wx 输出目录名 |
+
+## 命令
+
+```bash
+npm run extract       # sources/current → runtime + public/
+npm run build:wx      # → .wx-project 微信工程
+npm run finish:game   # 归档 current → history + clean:public
+npm run init:wx       # 新建微信工程目录
+```
+
+## 用户确认「可以了」
+
+当用户表示工程完成（「可以了」「没问题了」「能跑了」等），Agent **应主动**：
+
+1. 运行 `npm run finish:game`（归档 `sources/current/` → `sources/history/{游戏名}_{时间}/`，并清理 `public/assets/` 未引用文件）
+2. 简短告知归档目录名与清理结果
+3. 提醒下一个游戏只需往空的 `sources/current/` 放 html + 资源
+
+## 改代码原则
+
+- 微信适配改 `src/wx/phaser-wx-patch.js` 和 runtime 内 `typeof wx` 分支
+- 换游戏：放 `sources/current/` → `extract` → `build:wx`
+- 新微信工程用 `init:wx`，不要覆盖已有 `phaser3.90.0_xxx/`
