@@ -3,8 +3,21 @@ dist
 dist-ssr
 *.local
 
-# 构建产物
+# output/ 构建产物（保留 README 与子目录 .gitkeep）
+output/wx/**
+!output/wx/.gitkeep
+output/h5/**
+!output/h5/.gitkeep
+
+# 根目录遗留的微信独立工程（应迁到 output/wx/）
+/phaser3.90.0_*/
+/phaser2.3.0_*/
+
+# 微信工程内 bundle（模板目录不应有，独立工程为产物）
 phaser*/js/playable/bundle.js
+
+# 本地活跃工程指针（init:wx / build:wx 写入）
+.wx-project
 
 # 日志
 logs
