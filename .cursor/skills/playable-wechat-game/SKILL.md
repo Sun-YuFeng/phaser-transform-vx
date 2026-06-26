@@ -13,8 +13,9 @@ my-phaser-game/
 │   ├── current/              # 正在做：output.html + 资源 + def-template.json
 │   └── history/              # 已完成归档
 ├── phaser3.90.0/             # 微信版本模板
-├── phaser3.90.0_{时间}/      # 独立微信工程
-├── .wx-project               # 当前 build:wx 目标
+├── output/
+│   └── wx/phaser3.90.0_{时间}/  # 独立微信工程（产物）
+├── .wx-project               # 当前 build:wx 目标（如 output/wx/phaser3.90.0_xxx）
 ├── public/                   # extract 构建副本
 └── src/wx/ + src/playable/
 ```
@@ -26,7 +27,7 @@ my-phaser-game/
 - [ ] 2. npm run init:wx（可选，新微信工程）
 - [ ] 3. npm run extract
 - [ ] 4. npm run build:wx
-- [ ] 5. 微信开发者工具打开 phaser3.90.0_xxx/
+- [ ] 5. 微信开发者工具打开 `output/wx/phaser3.90.0_xxx/`
 - [ ] 6. 验证 OK → npm run finish:game（或说「可以了」）
 ```
 
@@ -72,7 +73,7 @@ node -e "const c=require('fs').readFileSync(require('fs').readFileSync('.wx-proj
 ## 命令
 
 ```bash
-npm run init:wx          # 新建 phaser3.90.0_{时间}/，写入 .wx-project
+npm run init:wx          # 新建 output/wx/phaser3.90.0_{时间}/，写入 .wx-project
 npm run extract          # runtime + public/assets
 npm run build:wx         # copy-wx-assets → {wx}/assets/ + bundle → js/playable/
 npm run probe:output     # 探测 output.html / runtime 关键 API
@@ -93,7 +94,8 @@ node -e "const c=require('fs').readFileSync('src/playable/runtime.js','utf8');
 ## 禁止事项
 
 - **不要**在某个游戏的工程里改 `phaser3.90.0/` 模板本身
-- **不要**把多个游戏共用同一个 `phaser3.90.0_xxx/` 目录（新游戏 `init:wx` 新建）
+- **不要**把多个游戏共用同一个 `output/wx/phaser3.90.0_xxx/` 目录（新游戏 `init:wx` 新建）
+- 构建产物只放 `output/`，根目录只保留模板与源码
 - 微信入口用 `require` + CJS，不手动改 `bundle.js`
 - 不 assign `GameGlobal.canvas`
 - **`vite/config.wx.mjs` 必须 `publicDir: false`** — 资源只放 `{wx}/assets/`，禁止 Vite 再拷 `public/` 到 `js/playable/`

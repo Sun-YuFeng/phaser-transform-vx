@@ -16,6 +16,20 @@ sources/
 - **只做当前游戏时**：文件只放 `sources/current/`
 - **不要**再往 `sources/` 根目录丢 export-xxx 文件夹
 
+## output 目录（构建产物）
+
+**所有命令生成的产物统一放 `output/`，不要堆在项目根目录。**
+
+```
+output/
+├── wx/phaser{版本}_{时间}/   ← init:wx 生成的微信工程，开发者工具打开
+└── h5/dist/                  ← npm run build 的 H5 包
+```
+
+- 微信**模板**仍在根目录：`phaser3.90.0/`、`phaser2.3.0/`（骨架，不是产物）
+- `.wx-project` 在根目录，内容为相对路径，如 `output/wx/phaser3.90.0_2026-06-26_094249`
+- 根目录遗留的 `phaser3.90.0_{时间}/` 应移入 `output/wx/`
+
 ## 其他路径
 
 | 路径 | 用途 |
@@ -23,8 +37,8 @@ sources/
 | `public/assets/` | extract 生成的构建用副本 |
 | `public/def-template.json` | 当前游戏配置（extract 同步） |
 | `phaser3.90.0/` | 微信版本模板（骨架） |
-| `phaser3.90.0_{时间}/` | 独立微信工程（开发者工具打开） |
-| `.wx-project` | 当前 build:wx 输出目录名 |
+| `output/wx/phaser3.90.0_{时间}/` | 独立微信工程（开发者工具打开） |
+| `.wx-project` | 当前 build:wx 输出目录（相对项目根） |
 
 ## 命令
 
@@ -47,4 +61,5 @@ npm run init:wx       # 新建微信工程目录
 
 - 微信适配改 `src/wx/phaser-wx-patch.js` 和 runtime 内 `typeof wx` 分支
 - 换游戏：放 `sources/current/` → `extract` → `build:wx`
-- 新微信工程用 `init:wx`，不要覆盖已有 `phaser3.90.0_xxx/`
+- 新微信工程用 `init:wx`，输出到 `output/wx/`，不要覆盖已有工程
+- 构建产物只写 `output/`，根目录只保留模板与源码
