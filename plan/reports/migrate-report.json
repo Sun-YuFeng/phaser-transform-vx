@@ -1,0 +1,55 @@
+{
+  "ok": true,
+  "startedAt": "2026-07-03T06:20:04.754Z",
+  "finishedAt": "2026-07-03T06:20:06.748Z",
+  "input": {
+    "abs": "C:\\Users\\QAQ\\Desktop\\phaser-transform-vx\\sources\\current\\output.html",
+    "dest": "C:\\Users\\QAQ\\Desktop\\phaser-transform-vx\\sources\\current\\output.html",
+    "sizeMb": 2.034
+  },
+  "detected": {
+    "format": "phaser2-applovin",
+    "template": "phaser2.6.0",
+    "phaserVersion": "2.6.0",
+    "extractScript": "extract-phaser26-html.mjs",
+    "buildScript": "copy-wx-phaser26-libs.mjs",
+    "markers": {
+      "playablesdk": false,
+      "playableMaker": false,
+      "applovin": true,
+      "qcCore": false,
+      "replaceJsZip": false,
+      "useInlineAssets": false
+    }
+  },
+  "steps": [
+    {
+      "name": "stage",
+      "ok": true,
+      "ms": 1,
+      "detail": "→ C:\\Users\\QAQ\\Desktop\\phaser-transform-vx\\sources\\current\\output.html (2.034 MB)"
+    },
+    {
+      "name": "init:wx",
+      "ok": true,
+      "ms": 177,
+      "detail": "output/wx/phaser2.6.0_2026-07-03_142004"
+    },
+    {
+      "name": "extract",
+      "ok": true,
+      "ms": 638,
+      "detail": "extract-phaser26-html.mjs"
+    },
+    {
+      "name": "build:wx:phaser26",
+      "ok": true,
+      "ms": 1154,
+      "detail": "build:wx:phaser26"
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "wxProject": "output/wx/phaser2.6.0_2026-07-03_142004",
+  "assetsInPublic": 22
+}

@@ -1,0 +1,57 @@
+---
+description: "微信迁移 [3.90.0 | phaser3.90.0 | PlayableMaker] — extract + build:wx + bundle"
+globs: src/wx/**,src/playable/**,phaser3.90.0/**,vite/config.wx.mjs,scripts/copy-wx-assets.mjs,scripts/extract-runtime.mjs
+alwaysApply: false
+---
+
+# 微信迁移 — Phaser 3.90.0（PlayableMaker）
+
+**版本关键字：** `3.90.0`、`phaser3.90.0`、PlayableMaker `output.html` runtime
+
+## 架构
+
+- 模板：`phaser3.90.0/`
+- 微信入口：`game.js`（adapter → **wxSetupCanvas** → bundle）
+- 源码：`src/wx/main.js` → `npm run build:wx` → `{wx}/js/playable/bundle.js`
+- 补丁：`src/wx/phaser-wx-patch.js`
+- 运行时：`src/playable/runtime.js`（extract 自 output.html，尽量少改）
+
+## 迁移流程
+
+```bash
+npm run init:wx -- --template phaser3.90.0   # 从模板复制 → 新建 output/wx/phaser3.90.0_xxx/（勿复用旧目录）
+npm run extract
+npm run build:wx                             # 只写入 .wx-project 指向的当前工程
+# 微信开发者工具打开 .wx-project 指向的 output/wx/phaser3.90.0_xxx/
+```
+
+生命周期与「只改当前、已完成 frozen」见 `playable-project.mdc`。
+
+## 必须遵守
+
+```javascript
+// ✅ 本地资源：patch File.prototype.load（readFile），不是 XHRLoader
+// ✅ 图片完成：loader.nextFile(file, true)
+// ✅ canvas：只读 window.canvas；game.js 可调 wxSetupCanvas
+// ✅ 微信 Phaser：WEBGL + canvas + parent: canvas
+// ✅ CJS bundle.js，禁止手改 bundle
+// ❌ 不要在 phaser3.90.0 模板里加 demo 或游戏 assets
+// ❌ 不 assign GameGlobal.canvas
+```
+
+## 构建
+
+- 资源：`copy-wx-assets.mjs` → `{wx}/assets/`（仅此一份）
+- `vite/config.wx.mjs`：`publicDir: false`；ES5 降级（微信不支持 runtime 里 `??` / `?.`）
+  - `build.target: 'es2015'`
+  - `esbuild.supported` 关闭 `nullish-coalescing`、`optional-chain`
+  - `minify: 'terser'`，`terserOptions.format.ecma: 5`
+
+## 排错顺序
+
+1. `Unexpected token ?` → 查 bundle 是否含 `??`，重跑 `build:wx`
+2. `wxPerf.now is not a function` → `phaser3.90.0/js/libs/weapp-adapter.js` 的 getPerformance fallback
+3. 画面拉伸 / `w:undefined` → `wxSetupCanvas` + `getSystemInfoSync` 兜底
+4. 兼容细节见 skill，**不要擅自改 skill**
+
+用户说「可以了」→ `npm run finish:game`（见 `playable-project.mdc`）。

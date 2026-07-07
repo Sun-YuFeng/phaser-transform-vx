@@ -21,14 +21,18 @@ const templateDir = templateArg
 const templateName = templateDir.split(/[/\\]/).pop();
 if (!existsSync(templateDir)) {
   console.error('Template not found:', templateDir);
-  console.error('Available: phaser3.90.0, phaser2.3.0');
+  console.error('Available: phaser3.90.0, phaser3.88.2, phaser2.3.0');
   process.exit(1);
 }
 
 setWxTemplateDir(templateName);
 
 const name = positional[0] || makeWxProjectName();
-const dest = join(ROOT, name);
+const wxOutDir = join(ROOT, 'output', 'wx');
+const relProject = `output/wx/${name}`;
+const dest = join(wxOutDir, name);
+
+mkdirSync(wxOutDir, { recursive: true });
 
 if (existsSync(dest)) {
   console.error('Already exists:', dest);
@@ -74,10 +78,10 @@ const projectConfig = JSON.parse(readFileSync(projectConfigPath, 'utf8'));
 projectConfig.projectname = name;
 writeFileSync(projectConfigPath, JSON.stringify(projectConfig, null, 2));
 
-setWxProjectDir(name);
+setWxProjectDir(relProject);
 
 console.log('Template:', templateName);
 console.log('Created wx project:', dest);
-console.log('Active (.wx-project):', name);
+console.log('Active (.wx-project):', relProject);
 console.log('Active (.wx-template):', templateName);
 console.log(`Next: ${extractCmd} → ${buildCmd} → 微信开发者工具打开上述目录`);

@@ -1,0 +1,62 @@
+---
+description: "微信迁移 [3.88.2 | phaser3.88.2] — 内嵌 Phaser bundle + dom-parser"
+globs: src/wx/**,src/playable/**,phaser3.88.2/**,vite/config.wx.mjs,scripts/copy-wx-assets.mjs,scripts/extract-runtime.mjs
+alwaysApply: false
+---
+
+# 微信迁移 — Phaser 3.88.2
+
+**版本关键字：** `3.88.2`、`phaser3.88.2`、HTML 内嵌 Phaser 3.88 webpack bundle
+
+## 与 3.90.0 的关键差异
+
+| 项目 | 3.90.0 | **3.88.2** |
+|------|--------|------------|
+| 模板 | `phaser3.90.0/` | `phaser3.88.2/` |
+| `game.js` | adapter → **wxSetupCanvas** → bundle | adapter → **dom-parser** → bundle（**勿** wxSetupCanvas） |
+| Phaser | runtime 外链 3.90 | **bundle 内嵌** 3.88 |
+| 位图字体 | 视游戏而定 | 常需 `dom-parser.js`（无 DOMParser） |
+| extract / build | 同左 | `extract` + `build:wx`（与 3.90 相同命令） |
+
+## 架构
+
+- 微信入口：`phaser3.88.2/game.js`
+
+```javascript
+require('./js/libs/weapp-adapter.js');
+require('./js/libs/dom-parser.js');   // 3.88 必需
+// 勿 wxSetupCanvas — Phaser 自行设 canvas
+require('./js/playable/bundle.js');
+```
+
+- 补丁 / runtime：`src/wx/phaser-wx-patch.js`、`src/playable/runtime.js`
+- 构建：`vite/config.wx.mjs`（ES5 降级规则同 3.90 rule）
+- **3.88 兼容排错**（phaserConfig、Ee、loading 等）：`.cursor/skills/playable-wechat-game/reference-3.88.2.md`
+
+## 迁移流程
+
+```bash
+npm run init:wx -- --template phaser3.88.2   # 复制模板 → 新建，不在旧 output 上改
+npm run extract
+npm run build:wx
+# 打开 .wx-project → output/wx/phaser3.88.2_xxx/
+```
+
+生命周期见 `playable-project.mdc`。
+
+## 必须遵守
+
+- **不要**在 3.88 的 `game.js` 里加 `wxSetupCanvas`（会导致 canvas 尺寸异常）
+- **不要**改 `phaser3.88.2/` 模板骨架；游戏资源只进 `{wx}/assets/`
+- weapp-adapter 需有 `document.elementFromPoint` → 返回 `window.canvas`（模板已含则勿重复改模板）
+- extract 后 runtime 改动清单见 skill `reference-3.88.2.md`；改 `runtime.js` 后重 `build:wx`，**不要**手改 bundle
+
+## 排错顺序
+
+1. `DOMParser is not defined` / 位图字体 XML → 确认 `dom-parser.js` 已在 `game.js` 引入
+2. `elementFromPoint is not a function` → weapp-adapter
+3. 画面比例 / Framebuffer → 确认**未** wxSetupCanvas；查 runtime `phaserConfig`（见 reference-3.88.2.md）
+4. 卡在 preload / `request() is not implemented` → runtime `const Ee = false`
+5. 其余 Loader / readFile / ES5 问题 → skill 通用对照表
+
+用户说「可以了」→ `npm run finish:game`。

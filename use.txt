@@ -1,0 +1,1 @@
+npm run migrate -- C:\Users\QAQ\Desktop\我的游戏.html

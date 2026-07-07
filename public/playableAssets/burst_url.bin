@@ -1,0 +1,58 @@
+{
+  "emitters": {
+    "default": {
+      "width": 0,
+      "height": 0,
+      "gravityX": 0,
+      "gravityY": 0,
+      "emitX": 0,
+      "emitY": 0,
+      "maxParticles": 50,
+      "frames": 1,
+      "quantity": 20,
+      "total": 20,
+      "immediate": true,
+      "collide": false,
+      "collideWorldBounds": false,
+      "enableBody": false,
+      "randomScale": false,
+      "minScale": 0.5,
+      "maxScale": 0.5,
+      "scaleFromX": 0,
+      "scaleFromY": 0,
+      "scaleToX": 0.8,
+      "scaleToY": 0.8,
+      "scaleRate": 500,
+      "scaleEase": "Linear",
+      "scaleEaseMode": "None",
+      "scaleYoyo": false,
+      "alphaMin": 0,
+      "alphaMax": 1,
+      "alphaRate": 1000,
+      "alphaEase": "Linear",
+      "alphaEaseMode": "None",
+      "alphaYoyo": true,
+      "particleArguments": {
+        "lifespan": {
+          "min": 2000,
+          "max": 2000
+        }
+      },
+      "rotationMin": -360,
+      "rotationMax": 360,
+      "bounceX": 0,
+      "bounceY": 0,
+      "angularDrag": 0,
+      "minSpeedX": -100,
+      "minSpeedY": -100,
+      "maxSpeedX": "100",
+      "maxSpeedY": "100",
+      "frequency": 25,
+      "enabled": true,
+      "explode": true,
+      "flow": false,
+      "blendMode": 0,
+      "default": "sparkle"
+    }
+  }
+}

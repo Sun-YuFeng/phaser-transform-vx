@@ -62,13 +62,22 @@ export function listResourceFiles(dir = CURRENT_DIR) {
 
 export function readGameName(dir = CURRENT_DIR) {
   const defPath = findDefTemplatePath(dir);
-  if (!defPath) return 'untitled';
-  try {
-    const def = JSON.parse(readFileSync(defPath, 'utf8'));
-    return def.general?.name || def.id || 'untitled';
-  } catch {
-    return 'untitled';
+  if (defPath) {
+    try {
+      const def = JSON.parse(readFileSync(defPath, 'utf8'));
+      const fromDef = def.general?.name || def.id;
+      if (fromDef) return fromDef;
+    } catch {
+      /* fall through */
+    }
   }
+  const htmlPath = findHtmlPath(dir);
+  if (htmlPath) {
+    const html = readFileSync(htmlPath, 'utf8');
+    const title = html.match(/<title>([^<]+)<\/title>/i);
+    if (title?.[1]?.trim()) return title[1].trim();
+  }
+  return 'untitled';
 }
 
 export function slugify(name) {
@@ -87,4 +96,28 @@ export function makeHistoryDirName(gameName, date = new Date()) {
 
 export function currentHasContent() {
   return findHtmlPath() !== null || listResourceFiles().length > 0;
+}
+
+/** 外部解码工具产出：sources/current/*_output/playableAssets/ */
+export function findPlayableAssetsOutputDir(dir = CURRENT_DIR) {
+  if (!existsSync(dir)) return null;
+  for (const name of readdirSync(dir)) {
+    if (SKIP_FILES.has(name) || HTML_NAMES.includes(name)) continue;
+    const full = join(dir, name);
+    if (!statSync(full).isDirectory()) continue;
+    if (existsSync(join(full, 'playableAssets'))) return full;
+  }
+  return null;
+}
+
+/** 外部解码工具产出：sources/current/*_output/resource/ */
+export function findDecompiledOutputDir(dir = CURRENT_DIR) {
+  if (!existsSync(dir)) return null;
+  for (const name of readdirSync(dir)) {
+    if (SKIP_FILES.has(name) || HTML_NAMES.includes(name)) continue;
+    const full = join(dir, name);
+    if (!statSync(full).isDirectory()) continue;
+    if (existsSync(join(full, 'resource'))) return full;
+  }
+  return null;
 }

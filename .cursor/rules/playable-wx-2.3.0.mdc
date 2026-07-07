@@ -1,0 +1,99 @@
+---
+description: "微信迁移 [2.3.0 | phaser2.3.0 | QC/MW + JSZip] — extract:phaser2 + build:wx:phaser2 + main.js bundle"
+globs: src/phaser2/**,phaser2.3.0/**,scripts/extract-phaser2-html.mjs,scripts/copy-wx-phaser2-libs.mjs,scripts/build-phaser2-game-bundle.mjs,scripts/phaser2-wx-sanitize.mjs,scripts/fix-phaser2-bin.mjs,scripts/probe-phaser2-html.mjs
+alwaysApply: false
+---
+
+# 微信迁移 — Phaser 2.3.0（QC / PlaySmart / MW）
+
+**版本关键字：** `2.3.0`、`phaser2.3.0`、QiCi + Phaser 2.3.0 + JSZip base64 单文件 HTML
+
+## 与 Phaser 3.x 的差异
+
+| 项目 | Phaser 3.88 / 3.90 | **Phaser 2.3** |
+|------|-------------------|----------------|
+| HTML | PlayableMaker runtime | MW/QC + JSZip 内嵌脚本 |
+| 识别 | `probe:output` | **`probe:phaser2`** |
+| extract | `npm run extract` | **`npm run extract:phaser2`** |
+| build | `npm run build:wx` | **`npm run build:wx:phaser2`**（= copy + bundle） |
+| 入口产物 | `js/playable/bundle.js` | **`js/main.js`**（单文件 ~2.4MB） |
+| 运行时补丁 | `src/wx/phaser-wx-patch.js` | **`src/phaser2/wx/phaser-wx-patch.js`** |
+| sanitize | extract + vite | **`scripts/phaser2-wx-sanitize.mjs`** |
+| 资源目录 | `{wx}/assets/` | **`{wx}/resource/`**（场景/预制体 `.bin`） |
+| Vite | `vite/config.wx.mjs` | **不用**（CJS require + 字符串补丁） |
+
+## 架构
+
+```
+phaser2.3.0/game.js
+  → weapp-adapter.js
+  → phaser2-wx-patch.js      # DOM/canvas/触摸/CustomEvent
+  → js/main.js               # 构建产物，勿手改
+       ├ phaser.min.js        # patchPhaser2ForWx
+       ├ qc-core-min.js       # sanitizeQcCoreForWx
+       ├ game-scripts.min.js
+       └ qc-loading-debug.js  # qici.init 由 game.js bootQici 调用
+```
+
+**补丁分层（排错时只改对应层，改完重 `build:wx:phaser2`）：**
+
+| 层 | 路径 | 职责 |
+|----|------|------|
+| 模板入口 | `phaser2.3.0/game.js` | `__wx`、`bootQici()`、`waitGameStart()` |
+| 运行时垫片 | `src/phaser2/wx/phaser-wx-patch.js` | canvas 父子、触摸、DOM 桩 |
+| Phaser Loader | `patchPhaser2ForWx` → `phaser.min.js` | xhrLoad→readFile、jsonLoadComplete |
+| QC 核心 | `sanitizeQcCoreForWx` → `qc-core-min.js` | 图集 base64、Dom 根、Node 回退 |
+| 游戏脚本 | `sanitizeGameScriptsForWx` 等 | gameStart、hasBase64、AUTO_GAMESTART |
+| 构建合并 | `scripts/build-phaser2-game-bundle.mjs` | 15 段脚本 → `main.js` |
+| 资源修复 | `scripts/fix-phaser2-bin.mjs` | `.bin` 内嵌 JSON 转义 |
+
+**2.3 兼容专表：** `.cursor/skills/playable-wechat-game/reference-2.3.0.md`
+
+## 迁移流程
+
+```bash
+# 1. 素材放入 sources/current/（output.html + 解包 resource 或 decompiled 目录）
+npm run probe:phaser2
+
+# 2. 从 HTML 解出脚本到 src/phaser2/lib + playable，资源索引到 public/assets
+npm run extract:phaser2
+
+# 3. 新建微信工程（每局游戏一次，勿复用旧 output）
+npm run init:wx -- --template phaser2.3.0
+
+# 4. 同步 lib/scripts/resource、打补丁、生成 main.js
+npm run build:wx:phaser2
+
+# 微信开发者工具打开 .wx-project 指向的目录
+# 改 main.js 或 resource 后：清缓存 → 重新编译
+```
+
+生命周期见 `playable-project.mdc`（`.wx-project` 仅当前局可写；已完成 `output/wx/...` 只读）。
+
+## 必须遵守
+
+- **禁止**对 2.3 工程使用 `npm run extract` / `build:wx`（PlayableMaker 3.x 管线）
+- **禁止**手改 `{wx}/js/main.js`；改 `src/phaser2/`、`scripts/phaser2-wx-sanitize.mjs` 或 `phaser2.3.0/game.js` 后重 `build:wx:phaser2`
+- **禁止**在 `phaser2.3.0/` 模板目录堆游戏 resource；资源只进当前 `.wx-project`
+- `data.js` 构建为 stub（`hasBase64()→false`），磁盘走 `resource/`；勿恢复空 `assetsPackage={}`
+- `project.config.json`：`disableUseStrict: true`；`packOptions.ignore` 忽略 `js/playable/lib`、`js/playable/scripts`（**不**忽略 `js/main.js`）
+
+## 排错顺序
+
+1. 卡在 Phaser 前 / 无 `qici.init` → `game.js` `bootQici()`；勿仅依赖 `window load`（sanitize 已移除）
+2. `request() is not implemented` / Loader 卡住 → `patchPhaser2ForWx` xhrLoad→readFile
+3. `json[gameConfig]: Unexpected token u` → `jsonLoadComplete` 须 `typeof e==="string"?JSON.parse(e)`（见 reference-2.3.0.md §3）
+4. `[phaser2] atlas tex iVBORw0KGgo` → base64 含 `/`，勿用 `indexOf("/")<0` 判断（见 reference §4）
+5. `appendChild` / `getTexture of null` → 多为 3、4 的连锁；查 Dom 根与图集
+6. `Parse fail` + `*.bin` → `fix-phaser2-bin.mjs`；build 时自动对 `resource/` 执行
+7. 黑屏有 `gameReady` 无 `gameLaunch` → `waitGameStart` + `AUTO_GAMESTART` 微信分支（game-scripts）
+8. 其余 Loader / 触摸 / DOM → skill `reference-2.3.0.md`
+
+## 验证清单（可玩标准）
+
+- [ ] `Phaser ... WebGL`
+- [ ] `[phaser2] qici.init()`
+- [ ] `GAME_CFG true`；无红色 `Parse scene fail` / `atlas tex`
+- [ ] `gameStart` → `gameLaunch`；棋盘/UI 可见可拖
+
+用户说「可以了」→ `npm run finish:game`。

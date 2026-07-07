@@ -16,6 +16,7 @@
     "replace_js/picDesc.js"
   ],
   "scriptList": [
+    "replace_js/pl-adapter.js",
     "replace_js/Assets/meta/globalUrlMap.js",
     "replace_js/lib/phaser.min.js",
     "replace_js/lib/webfontloader.js",

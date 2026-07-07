@@ -225,7 +225,6 @@ qici.loadGame = function () {
         width: width,
         height: height,
         parent: 'gameDiv',
-        canvas: window.canvas,
         state: qici.splashState,
         editor: qici.config.editor === true,
         backgroundColor: new qc.Color(qici.config.backgroundColor),
@@ -260,12 +259,9 @@ qici.loadGame = function () {
 
 qici.splashState = {
     init: function () {
-        if (!window.__wx) {
-            window[qici.config.gameInstance].fullScreen();
-        }
+        window[qici.config.gameInstance].fullScreen();
         //框架初始化
-        var _ps = (typeof GameGlobal !== 'undefined' ? GameGlobal : window).ps || (typeof ps !== 'undefined' ? ps : null);
-        if (_ps && typeof _ps.init === 'function') _ps.init();
+        ps.init();
     },
     preload: function () {
         var game = window[qici.config.gameInstance];
@@ -340,9 +336,6 @@ qici.splashState = {
         }
     },
     create: function () {
-        if (window.__wx) {
-            window[qici.config.gameInstance].fullScreen();
-        }
         var game = window[qici.config.gameInstance];
         game.scene.entry = qici.config.entryScene;
         game.scene.list = qici.config.scene;

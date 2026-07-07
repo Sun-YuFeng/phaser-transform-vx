@@ -1,0 +1,106 @@
+---
+description: "微信迁移 [2.6.0 | phaser2.6.0 | AppLovin + Phaser 2.6] — extract:phaser26 + build:wx:phaser26 + main.js bundle"
+globs: src/phaser26/**,src/phaser2/wx/phaser-wx-patch.js,phaser2.6.0/**,scripts/extract-phaser26-html.mjs,scripts/copy-wx-phaser26-libs.mjs,scripts/build-phaser26-game-bundle.mjs,scripts/phaser2-wx-sanitize.mjs,scripts/detect-playable-format.mjs
+alwaysApply: false
+---
+
+# 微信迁移 — Phaser 2.6.0（AppLovin 单文件 HTML）
+
+**版本关键字：** `2.6.0`、`phaser2.6.0`、`phaser2-applovin`、`packJSONObj` + `Phaser v2.6` + `PORT.APPLOVIN`
+
+## 与 2.3.0 / 3.x 的差异
+
+| 项目 | Phaser 2.3 QC/MW | **Phaser 2.6 AppLovin** | Phaser 3.x |
+|------|------------------|-------------------------|------------|
+| HTML | JSZip + `replace_js` | **多 `<script>` 块 + `packJSONObj`** | PlayableMaker runtime |
+| 识别 | `probe:phaser2` | **`detectPlayableFormat` → `phaser2-applovin`** | `probe:output` |
+| extract | `extract:phaser2` | **`extract:phaser26`** | `extract` |
+| build | `build:wx:phaser2` | **`build:wx:phaser26`** | `build:wx` |
+| 源码树 | `src/phaser2/` | **`src/phaser26/`** | `src/playable/` |
+| 入口产物 | `js/main.js`（QC bundle） | **`js/main.js`**（AppLovin bundle） | `js/playable/bundle.js` |
+| 资源目录 | `{wx}/resource/` | **`{wx}/playableAssets/`** | `{wx}/assets/` |
+| 引擎补丁 | `patchPhaser2ForWx` | **`patchPhaser26ForWx`** + 部分共用 `patchPhaser2ForWx` | runtime + vite |
+| 运行时垫片 | `phaser2-wx-patch.js`（QC 分支） | **同文件 `phaser26` 分支** | `src/wx/phaser-wx-patch.js` |
+| Vite | 不用 | **不用** | `vite/config.wx.mjs` |
+
+## 架构
+
+```
+phaser2.6.0/game.js
+  → weapp-adapter.js
+  → phaser2-wx-patch.js          # DOM/canvas/触摸/AppLovin 26 钩子
+  → js/main.js                   # 构建产物，勿手改
+       ├ lib/phaser.js            # patchPhaser26ForWx + patchPhaser2ForWx
+       ├ lib/p2.js … boot.js
+       └ scripts/*.js             # AppLovin 游戏逻辑 + 17-state-patch 等
+  → playableAssets/              # extract 外置的 pack 资源
+```
+
+**补丁分层（排错时只改对应层，改完重 `build:wx:phaser26`）：**
+
+| 层 | 路径 | 职责 |
+|----|------|------|
+| 模板入口 | `phaser2.6.0/game.js` | `__wx`、`__wxPhaser26DocumentTouch`、`window.onload` 引导 |
+| 运行时垫片 | `src/phaser2/wx/phaser-wx-patch.js` | 触摸桥、level-ready 输入重绑、choice tap 兜底 |
+| Phaser 2.6 | `patchPhaser26ForWx` → `lib/phaser.js` | xhr/readFile、PointerV3、InpScale、TouchDoc、WebGL 回退 |
+| 游戏脚本 shim | `applyPhaser26GameScriptsShim` 等 | `window.open`→CTA、`hookPhaser26LevelReady` |
+| Level / 状态 | `src/phaser26/scripts/17-state-patch.js` 等 | `curButton=1`、`afterCreate` 钩子 |
+| 构建合并 | `scripts/build-phaser26-game-bundle.mjs` | `bundle-order.json` → `main.js` |
+| 资源同步 | `scripts/copy-wx-phaser26-libs.mjs` | `public/playableAssets` → `{wx}/playableAssets` |
+
+**2.6 兼容专表：** `.cursor/skills/playable-wechat-game/reference-2.6.0.md`
+
+## 迁移流程
+
+```bash
+# 1. 素材放入 sources/current/（output.html；资源可平铺或 assets/，可选 _phaser_pack_manifest.json 外置 data URL）
+# 自动识别格式（可选）：
+npm run migrate
+# 或手动：
+
+# 2. 从 HTML 解出脚本 → src/phaser26，资源 → public/playableAssets
+npm run extract:phaser26
+
+# 3. 新建微信工程（每局游戏一次，勿复用旧 output）
+npm run init:wx -- --template phaser2.6.0
+# 或：npm run init:wx:phaser26
+
+# 4. 同步 playableAssets、打补丁、生成 main.js
+npm run build:wx:phaser26
+
+# 微信开发者工具打开 .wx-project 指向的目录
+# 改补丁或 src/phaser26 后：清缓存 → 重新编译
+```
+
+生命周期见 `playable-project.mdc`（`.wx-project` 仅当前局可写；已完成 `output/wx/...` 只读）。
+
+## 必须遵守
+
+- **禁止**对 2.6 工程使用 `extract:phaser2` / `build:wx:phaser2`（QC 管线）或 `extract` / `build:wx`（3.x 管线）
+- **禁止**手改 `{wx}/js/main.js`；改 `src/phaser26/`、`scripts/phaser2-wx-sanitize.mjs`、`src/phaser2/wx/phaser-wx-patch.js` 或 `phaser2.6.0/game.js` 后重 `build:wx:phaser26`
+- **禁止**在 `phaser2.6.0/` 模板目录堆游戏 `playableAssets`；资源只进当前 `.wx-project`
+- **禁止**在 `updateScalingAndBounds` 里强制 `scale.width/height = window`（曾导致画面放大 + 触控失效）；触控用 **PointerV3 + InpScale**（见 reference-2.6.0.md）
+- `project.config.json`：`disableUseStrict: true`；`packOptions.ignore` 忽略 `js/playable/**`（**不**忽略 `js/main.js`）
+- Level `afterCreate` 已调 `AppLovin.handleOrientation`；`hookPhaser26LevelReady` **勿**再 `scale.refresh()` 叠加重算布局
+
+## 排错顺序
+
+1. 黑屏 / 双 boot → `__wxPhaser26Boot`；`game.js` 延迟 `window.onload()`；勿重复 `new Phaser.Game`
+2. `touchstart of undefined` / canvas.dispatchEvent → 确认 `__wxPhaser26DocumentTouch` + TouchDoc（监听 `document`）
+3. 能渲染、点不动 / `wx-tap miss` 坐标偏差 → **PointerV3**（`pageY * game.height / innerHeight`）；查 `phaser-onDown world` vs `hair*-bounds`
+4. 画面突然放大 → 是否误加 ScaleV2（改 scale 显示尺寸）；回退并只保留 InpScale
+5. `onDown` 双发 #5/#6 → level-ready 后禁用 `input.mouse`
+6. touch 监听丢失 → `refreshPhaser26Input` 在 level-ready 重绑；`touch.stop` 后须清空 handler 再 `start`
+7. Loader / 本地资源 → `patchPhaser26ForWx` xhrLoad→`readFile`；扩展名大小写重试
+8. WebGL 失败 → Canvas fallback（`[phaser26] WebGL failed`）
+9. 其余触摸 / EXACT_FIT / AppLovin 朝向 → skill `reference-2.6.0.md`
+
+## 验证清单（可玩标准）
+
+- [ ] 控制台有 `[phaser26] window.onload()` 或 level 进入日志
+- [ ] 画面比例正常（无异常放大）
+- [ ] `[phaser26] phaser-onDown` 的 `world y` ≈ `raw y × (game.height / innerHeight)`
+- [ ] 点击发型/选项可推进（`choice onInputDown` 或 `wx-tap choice`）
+- [ ] 完整流程可玩到 CTA / 结束
+
+用户说「可以了」→ `npm run finish:game`。

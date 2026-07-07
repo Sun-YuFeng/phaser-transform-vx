@@ -1,8 +1,24 @@
 import { defineConfig } from 'vite';
 import { resolve, join } from 'path';
+import { readFileSync, existsSync } from 'fs';
 import { getWxProjectDir } from '../scripts/wx-project.mjs';
 
 const wxRoot = getWxProjectDir();
+
+function resolveWxEntry() {
+    const defPath = resolve('public/def-template.json');
+    if (existsSync(defPath)) {
+        try {
+            const def = JSON.parse(readFileSync(defPath, 'utf8'));
+            if (def._meta?.format === 'webpack_main') {
+                return resolve('src/wx/main-webpack.js');
+            }
+        } catch {
+            // ignore
+        }
+    }
+    return resolve('src/wx/main.js');
+}
 
 export default defineConfig({
     // 资源由 copy-wx-assets.mjs 同步到 {wx}/assets/，勿让 Vite 再拷 public/ → js/playable/
@@ -13,7 +29,7 @@ export default defineConfig({
         // 微信小游戏 JS 引擎不支持 ?? / ?. 等 ES2020 语法
         target: 'es2015',
         lib: {
-            entry: resolve('src/wx/main.js'),
+            entry: resolveWxEntry(),
             formats: ['cjs'],
             fileName: () => 'bundle.js',
         },

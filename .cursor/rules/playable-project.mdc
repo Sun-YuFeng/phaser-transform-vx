@@ -1,5 +1,5 @@
 ---
-description: PlayableMaker 双端项目结构（H5 Vite + 微信 phaser 模板 + 独立工程目录）
+description: PlayableMaker 双端项目结构 + 版本路由 + rule/skill 治理（alwaysApply）
 alwaysApply: true
 ---
 
@@ -22,13 +22,83 @@ sources/
 
 ```
 output/
-├── wx/phaser{版本}_{时间}/   ← init:wx 生成的微信工程，开发者工具打开
+├── wx/phaser{版本}_{时间}/   ← 微信工程（进行中 + 已完成均在此，见下方生命周期）
 └── h5/dist/                  ← npm run build 的 H5 包
 ```
 
-- 微信**模板**仍在根目录：`phaser3.90.0/`、`phaser2.3.0/`（骨架，不是产物）
-- `.wx-project` 在根目录，内容为相对路径，如 `output/wx/phaser3.90.0_2026-06-26_094249`
-- 根目录遗留的 `phaser3.90.0_{时间}/` 应移入 `output/wx/`
+- 微信**模板**在根目录：`phaser3.90.0/`、`phaser3.88.2/`、`phaser2.6.0/`、`phaser2.3.0/`（**只读骨架**，见「工程生命周期」）
+- `.wx-template` — 当前选用的模板目录名（如 `phaser3.88.2`）
+- `.wx-project` — **当前进行中**的微信工程路径（如 `output/wx/phaser3.88.2_2026-06-26_112120`）
+- 根目录遗留的 `phaser3.x.x_{时间}/` 应移入 `output/wx/`
+
+## 工程生命周期（必读）
+
+**每一局游戏 = 从模板复制一份，新建目录；不在旧工程上续改。**
+
+```
+phaser3.x.x/（模板，只读）
+      │  init:wx：整份复制骨架 → 新建
+      ▼
+output/wx/phaser{版本}_{时间}/   ← .wx-project 指向这里（当前进行中）
+      │  extract → build:wx 只写入此目录
+      │  排错：改 src/ 共享层后重 build，或改当前工程内非 bundle 文件
+      ▼
+用户「可以了」→ finish:game（归档 sources/current → history）
+      │
+      ▼
+output/wx/... 保留为已完成交付物 —— 不再修改、不再 build 覆盖
+下一局 → 重新 init:wx，全新 output/wx/... 目录
+```
+
+| 层级 | 路径 | 能否改 | 说明 |
+|------|------|--------|------|
+| 模板 | `phaser3.90.0/` 等 | **否**（不为某一局游戏改） | 每次 `init:wx` 从这里**复制**；仅版本骨架升级时才动模板 |
+| 进行中素材 | `sources/current/` | **是** | 当前游戏的 html + 资源 |
+| 进行中微信工程 | `.wx-project` → `output/wx/...` | **是**（仅当前这一条） | `build:wx` 只写这里；**禁止**手改 `bundle.js` |
+| 已完成微信工程 | `output/wx/` 里其他旧目录 | **否** | 交付快照，不要回去 patch |
+| 已完成素材 | `sources/history/` | **否** | 归档，不参与构建 |
+| 共享 wx 源码 | `src/wx/`、`src/playable/` 等 | 排错时可改 | 改后 `build:wx` 刷到**当前** `.wx-project`，不影响已完成旧目录 |
+
+**禁止：**
+
+- 在**已有** `output/wx/phaser*_xxx/` 上「接着上一局改」——换游戏必须 `init:wx` 新建
+- 把游戏 assets / bundle 写进根目录**模板**目录
+- 修改 `output/wx/` 里**非当前** `.wx-project` 的旧工程
+- 为了修当前局，去改已完成的历史 output 目录
+
+## 版本路由（Agent 必读）
+
+**迁移 / 构建 / 改 wx 适配时，先确定版本，再只执行对应版本 rule。**
+
+### 1. 检测版本（按优先级）
+
+1. 读 `.wx-template` 或 `.wx-project` 路径中的版本段
+2. 用户描述、`output.html` 内嵌 Phaser 版本、`npm run probe:output` / `probe:phaser2` / `npm run migrate` 结果
+3. 当前打开文件路径（如 `phaser3.88.2/**` → 3.88.2；`src/phaser26/**` → 2.6.0）
+
+### 2. 关键字 → rule 映射
+
+| 版本关键字 | 模板目录 | 迁移 rule |
+|-----------|---------|-----------|
+| `3.90.0`、`phaser3.90.0`、PlayableMaker runtime | `phaser3.90.0/` | `.cursor/rules/playable-wx-3.90.0.mdc` |
+| `3.88.2`、`phaser3.88.2`、内嵌 Phaser 3.88 bundle | `phaser3.88.2/` | `.cursor/rules/playable-wx-3.88.2.mdc` |
+| `2.6.0`、`phaser2.6.0`、`phaser2-applovin`、`packJSONObj` + Phaser 2.6 | `phaser2.6.0/` | `.cursor/rules/playable-wx-2.6.0.mdc` |
+| `2.3.0`、`phaser2.3.0`、QC/MW + JSZip HTML | `phaser2.3.0/` | `.cursor/rules/playable-wx-2.3.0.mdc` |
+
+版本表以 `scripts/wx-project.mjs` 的 `WX_TEMPLATES` 为准。
+
+### 3. 执行原则
+
+- **一条版本 = 一条 rule**：架构、命令、入口文件以该 rule 为准，**不要混用**其他版本的 extract/build/入口
+- **兼容排错**读 skill：`.cursor/skills/playable-wechat-game/SKILL.md`（问题 → API，非迁移流程）
+- 未识别版本时：先 `probe:output` 或问用户，再选 rule
+
+## Rule / Skill 治理
+
+| 类型 | 职责 | 何时改 |
+|------|------|--------|
+| **Rule**（本目录 `.mdc`） | 版本迁移流程、工程结构、构建约束 | 仅用户明确要求或新增支持版本时 |
+| **Skill**（`.cursor/skills/`） | 导入兼容、堆栈排错、问题→API 对照 | **禁止擅自改**；某问题已解决且可复用时，**先问用户**「是否写入 skill/reference」，确认后再更新 |
 
 ## 其他路径
 
@@ -36,18 +106,16 @@ output/
 |------|------|
 | `public/assets/` | extract 生成的构建用副本 |
 | `public/def-template.json` | 当前游戏配置（extract 同步） |
-| `phaser3.90.0/` | 微信版本模板（骨架） |
-| `output/wx/phaser3.90.0_{时间}/` | 独立微信工程（开发者工具打开） |
-| `.wx-project` | 当前 build:wx 输出目录（相对项目根） |
+| `output/wx/phaser{版本}_{时间}/` | 独立微信工程（开发者工具打开） |
 
-## 命令
+## 命令（通用）
 
 ```bash
-npm run extract       # sources/current → runtime + public/
-npm run build:wx      # → .wx-project 微信工程
 npm run finish:game   # 归档 current → history + clean:public
-npm run init:wx       # 新建微信工程目录
+npm run init:wx       # 新建微信工程（配合 --template 选版本）
 ```
+
+各版本 extract / build 命令见对应版本 rule。
 
 ## 用户确认「可以了」
 
@@ -55,11 +123,12 @@ npm run init:wx       # 新建微信工程目录
 
 1. 运行 `npm run finish:game`（归档 `sources/current/` → `sources/history/{游戏名}_{时间}/`，并清理 `public/assets/` 未引用文件）
 2. 简短告知归档目录名与清理结果
-3. 提醒下一个游戏只需往空的 `sources/current/` 放 html + 资源
+3. 说明当前 `output/wx/...` 微信工程已交付，**不要再改**；下一局需 `init:wx` 新建目录
+4. 提醒下一个游戏只需往空的 `sources/current/` 放 html + 资源
 
 ## 改代码原则
 
-- 微信适配改 `src/wx/phaser-wx-patch.js` 和 runtime 内 `typeof wx` 分支
-- 换游戏：放 `sources/current/` → `extract` → `build:wx`
-- 新微信工程用 `init:wx`，输出到 `output/wx/`，不要覆盖已有工程
+- **新游戏 / 换游戏**：`sources/current/` 换新 html → `init:wx` **新建** `output/wx/...` → extract → build:wx（**不要**复用或覆盖旧 output 目录）
+- **当前局排错**：只动 `sources/current/`、`src/` 共享层，以及 `.wx-project` 指向的**当前**工程；改完重跑 build，**不要**手改 bundle
+- **已完成工程**：留在 `output/wx/`，视为只读；下一局重新 `init:wx`
 - 构建产物只写 `output/`，根目录只保留模板与源码

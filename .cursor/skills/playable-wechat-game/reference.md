@@ -1,12 +1,21 @@
 # PlayableMaker 微信移植 — 问题与 API 参考
 
+> **分工：** 迁移流程见 `.cursor/rules/playable-wx-{版本}.mdc`；本文档仅作兼容排错补充。  
+> **治理：** Agent 不得擅自修改；新解法需用户确认后再写入本文档或 SKILL.md。
+
 ## 微信工程命名与模板
 
 | 路径 | 用途 |
 |------|------|
-| `phaser3.90.0/` | 版本模板（骨架），**不要**在此 build 某个游戏 |
-| `phaser3.90.0_{YYYY-MM-DD_HHmmss}/` | 独立游戏工程，微信开发者工具打开此目录 |
+| `phaser3.90.0/` / `phaser3.88.2/` / `phaser2.3.0/` | 版本模板（骨架），**不要**在此 build 某个游戏 |
+| `output/wx/phaser{版本}_{时间}/` | 独立游戏工程，微信开发者工具打开此目录 |
+| `.wx-template` | 当前选用的模板（如 `phaser3.88.2`） |
 | `.wx-project` | 一行文本，记录当前 `build:wx` 输出目录名 |
+
+**分版本参考：**
+
+- [reference-3.88.2.md](reference-3.88.2.md)（3.88 内嵌 bundle 专表）
+- [reference-2.3.0.md](reference-2.3.0.md)（2.3 QC/MW + `main.js` bundle 专表）
 
 ```bash
 npm run init:wx                              # 自动命名
@@ -160,6 +169,32 @@ PlayableMaker 每次导出压缩变量名不同，**不必记**。方法名（`o
 | **wx 替代** | `getParent` 返回空 |
 | **补丁层** | Phaser — `ScaleManager.prototype.getParent` |
 
+### 14. 触摸 / 拖拽（3.88 webpack_main 重点）
+
+| | |
+|---|---|
+| **现象** | 开发者工具可玩；**真机只有 `setInteractive` 按钮（如 Play Now）有反应**；点空白不进教程、`input.once('pointerdown')` 无效、棋子拖不动；常无报错 |
+| **根因 1** | `processDownEvents` 仅当 `downElement === canvas` 发 `POINTER_DOWN`；真机 `touch.target` ≠ canvas → 只发 `POINTER_DOWN_OUTSIDE` |
+| **根因 2** | `TouchManager.onTouchMove` 依赖 `document.elementFromPoint(x,y)===canvas` 维护 `isOver`；坐标与 `innerWidth` 不一致时 `touchmove` 断链 → 拖拽失败 |
+| **根因 3** | 假关 `installOverlay` 全屏透明 `setInteractive`（depth 30）拦截棋盘（H5 试玩 CTA 设计） |
+| **wx 替代** | 强制 `touch.target` / `downElement = canvas`；`touchstart` 时 `setCanvasOver`；`elementFromPoint` 直接返回 `window.canvas`；wx 跳过 `installOverlay` |
+| **补丁层** | `src/wx/apply-phaser-wx-patches.js` + `extract-webpack-main.mjs` + 模板 `weapp-adapter.js` |
+| **搜** | `downElement`、`setCanvasOver`、`installOverlay`、`handlePieceDragStart`、`elementFromPoint` |
+| **详表** | [reference-3.88.2.md § 交互](reference-3.88.2.md) |
+
+**电脑端相关（同一 extract 管线）：** `pauseOnBlur:!1`、PlayableSDK 跳过 `visibilityState` 门闩、resize 去重、教程 tween `{from,to}`、`Audio.play()` → `Promise.resolve()`。
+
+### 15. 内嵌资源未外置
+
+| | |
+|---|---|
+| **现象** | `assets/` 已有 png，但 `runtime.js` / `bundle.js` 仍含 `data:image/png;base64`；换磁盘 logo 不生效；包体积大 |
+| **根因** | extract 只复制 manifest，未改 `load.image(...,"data:...")`；变量 key（`st.zh`、`nt`）也未替换 |
+| **wx 替代** | `scripts/externalize-wx-assets.mjs`（extract 自动调用）→ `assets/{name}.png` + `readFile` 加载 |
+| **补丁层** | `extract-webpack-main.mjs`、`copy-wx-assets.mjs` |
+| **Logo** | manifest `images/st.zh` 等 → 纹理 `logo_zh`；改源文件后 `extract` + `build:wx` |
+| **详表** | [reference-3.88.2.md § 资源外置](reference-3.88.2.md) |
+
 ---
 
 ## 错误速查（症状 → 问题编号）
@@ -176,6 +211,8 @@ PlayableMaker 每次导出压缩变量名不同，**不必记**。方法名（`o
 | `module 'bundle.js' is not defined` | 9 |
 | `Cannot set property 'height'` | 10 |
 | `Cannot set def-template.` | 看**第一个** TypeError，对照上表 |
+| 真机只有按钮能点 / 拖不动 | 14 |
+| 改 assets 不生效 / bundle 仍很大 | 15 |
 
 ---
 

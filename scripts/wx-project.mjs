@@ -8,6 +8,8 @@ const TEMPLATE_POINTER = join(ROOT, '.wx-template');
 /** 支持的微信版本模板 */
 export const WX_TEMPLATES = {
   '3.90.0': 'phaser3.90.0',
+  '3.88.2': 'phaser3.88.2',
+  '2.6.0': 'phaser2.6.0',
   '2.3.0': 'phaser2.3.0',
 };
 

@@ -21,6 +21,10 @@ const formats = [
   { name: 'v2', ok: c.includes('const Tt="applovin"') && c.includes('function Ii(){') },
   { name: 'v3', ok: c.includes('const e="applovin"') && c.includes('const Wt=window||Tt.g') },
   { name: 'phaser2-mw', ok: c.includes('assetsPackage["replace_js"]') && c.includes('qc-core-min.js') },
+  {
+    name: 'webpack_main',
+    ok: c.includes('window.PlayableSDK') && c.includes('new Phaser.Game') && !c.includes('Created with PlayableMaker.com'),
+  },
 ];
 const detected = formats.find((f) => f.ok);
 console.log('\nExtract format:', detected?.name ?? 'UNKNOWN — extend locateSections()');

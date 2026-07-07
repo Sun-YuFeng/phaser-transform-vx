@@ -5,8 +5,8 @@
 import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
-import { mkdirSync, writeFileSync, cpSync } from 'fs';
-import { findHtmlPath, listResourceFiles } from './game-sources.mjs';
+import { mkdirSync, writeFileSync, cpSync, existsSync, readdirSync } from 'fs';
+import { findHtmlPath, listResourceFiles, findDecompiledOutputDir } from './game-sources.mjs';
 import { wxSafeFilename } from './normalize-asset-names.mjs';
 import { patchPhaser2ForWx } from './patch-phaser2-for-wx.mjs';
 import {
@@ -15,6 +15,7 @@ import {
 } from './phaser2-wx-sanitize.mjs';
 
 const SCRIPT_LIST = [
+  'replace_js/pl-adapter.js',
   'replace_js/Assets/meta/globalUrlMap.js',
   'replace_js/lib/phaser.min.js',
   'replace_js/lib/webfontloader.js',
@@ -24,7 +25,7 @@ const SCRIPT_LIST = [
   'replace_js/picDesc.js',
   'replace_js/data.js',
   'replace_js/js/resource-loader.js',
-  'replace_js/js/resource_loader.js',
+  'replace_js/js/resource_loader.js', // 部分包无此文件
   'replace_js/Assets/meta/assetCountMap.js',
   'replace_js/js/game-scripts.min.js',
   'replace_js/lib/qc-loading-debug.js',
@@ -70,10 +71,12 @@ mkdirSync(publicAssets, { recursive: true });
 let ok = 0;
 const missing = [];
 
+const OPTIONAL_SCRIPTS = new Set(['replace_js/js/resource_loader.js']);
+
 for (const key of SCRIPT_LIST) {
   const entry = zip.file(key);
   if (!entry) {
-    missing.push(key);
+    if (!OPTIONAL_SCRIPTS.has(key)) missing.push(key);
     continue;
   }
   const code = await entry.async('string');
@@ -112,6 +115,20 @@ for (const { src, rel } of listResourceFiles()) {
   const destName = wxSafeFilename(rel.includes('/') ? rel.split('/').pop() : rel);
   cpSync(src, path.join(publicAssets, destName), { force: true });
   copied++;
+}
+
+const decompiled = findDecompiledOutputDir();
+if (decompiled) {
+  const decAssets = path.join(decompiled, 'assets');
+  if (existsSync(decAssets)) {
+    for (const name of readdirSync(decAssets)) {
+      cpSync(path.join(decAssets, name), path.join(publicAssets, wxSafeFilename(name)), {
+        force: true,
+      });
+      copied++;
+    }
+  }
+  console.log('Decompiled output:', decompiled);
 }
 
 console.log(`\nDone: ${ok}/${SCRIPT_LIST.length} scripts from zip`);

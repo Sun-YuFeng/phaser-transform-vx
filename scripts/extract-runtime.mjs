@@ -8,6 +8,9 @@ import {
   findHtmlPath,
   listResourceFiles,
 } from './game-sources.mjs';
+import { isWebpackPhaserMain, runExtractWebpackMain } from './extract-webpack-main.mjs';
+import { convertWebpFileToPng, convertWebpFilesInDir } from './webp-to-png.mjs';
+import { extractInlineAssets } from './extract-inline-assets.mjs';
 
 ensureSourceDirs();
 
@@ -19,6 +22,12 @@ if (!htmlPath) {
 }
 
 const content = fs.readFileSync(htmlPath, 'utf8');
+
+if (isWebpackPhaserMain(content)) {
+  console.log('Detected format: webpack_main (embedded Phaser)');
+  await runExtractWebpackMain();
+  process.exit(0);
+}
 
 const BOOTSTRAP_MARKER = 'console.log("%c Created with PlayableMaker.com "';
 
@@ -206,7 +215,30 @@ fs.writeFileSync(path.join(outDir, 'runtime.js'), finalCode);
 console.log('Wrote src/playable/runtime.js, size', (finalCode.length / 1024).toFixed(1), 'KB');
 console.log('Manager alias:', manager);
 
-const defPath = findDefTemplatePath();
+let defPath = findDefTemplatePath();
+
+// PlayableMaker inline-assets 格式：def-template.json 与全部资源以 base64 内嵌在
+// output.html 中。当 sources/current/ 没有独立的 def-template.json 时，从 html 解出，
+// 落到 sources/current/（def-template.json + assets/），供后续正常流程消费。
+if (!defPath) {
+  const { def, assets } = extractInlineAssets(content);
+  if (def) {
+    const curDir = path.dirname(htmlPath);
+    const curAssets = path.join(curDir, 'assets');
+    writeFileSync(path.join(curDir, 'def-template.json'), JSON.stringify(def));
+    if (assets.length) {
+      mkdirSync(curAssets, { recursive: true });
+      for (const a of assets) {
+        fs.writeFileSync(path.join(curAssets, a.name), a.buffer);
+      }
+    }
+    console.log(
+      `Decoded inline assets from ${path.basename(htmlPath)}: def-template.json + ${assets.length} file(s) → sources/current/assets/`,
+    );
+    defPath = findDefTemplatePath();
+  }
+}
+
 if (!defPath) {
   console.warn('Missing def-template.json in sources/current/ — skip asset copy');
   process.exit(0);
@@ -217,12 +249,23 @@ const assetsDir = path.join(publicDir, 'assets');
 mkdirSync(assetsDir, { recursive: true });
 
 let copied = 0;
+let pngConverted = 0;
 for (const { src, rel } of listResourceFiles()) {
-  const destName = wxSafeFilename(rel.includes('/') ? rel.split('/').pop() : rel);
-  cpSync(src, path.join(assetsDir, destName), { force: true });
+  const baseName = rel.includes('/') ? rel.split('/').pop() : rel;
+  const destName = wxSafeFilename(baseName.replace(/\.webp$/i, '.png'));
+  const destPath = path.join(assetsDir, destName);
+  if (src.toLowerCase().endsWith('.webp')) {
+    await convertWebpFileToPng(src, destPath);
+    pngConverted++;
+  } else {
+    cpSync(src, destPath, { force: true });
+  }
   copied++;
 }
 
+const swept = await convertWebpFilesInDir(assetsDir);
+if (swept > 0) pngConverted += swept;
+
 const def = normalizeDefAssetRefs(JSON.parse(fs.readFileSync(defPath, 'utf8')));
 writeFileSync(path.join(publicDir, 'def-template.json'), JSON.stringify(def));
-console.log(`Copied ${copied} assets from sources/current/ → public/assets/`);
+console.log(`Copied ${copied} assets from sources/current/ → public/assets/ (${pngConverted} webp→png)`);
